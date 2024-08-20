@@ -13,6 +13,9 @@ Some memory abstractions are already supported such as:
 Others are expected to be added in future releases, or can be supported by the application itself.
 To implement a custom interface see the mtb_block_storage.h file for what is expected and the mtb_block_storage_*.c files for how the existing protocols are supported.
 
+#### v1.1.0
+* Fixed support for older version of HAL
+
 #### v1.0.1
 * Patch version update
 * ECT flash handling updates
@@ -32,7 +35,7 @@ Minimum required ModusToolbox™ Software Environment: v3.0
 
 ### More information
 Use the following links for more information, as needed:
-* [API Reference Guide](TBD)
+* [API Reference Guide](https://infineon.github.io/block-storage/html/modules.html)
 * [Cypress Semiconductor, an Infineon Technologies Company](http://www.infineon.com)
 * [Infineon GitHub](https://github.com/infineon)
 * [ModusToolbox™](https://www.cypress.com/products/modustoolbox-software-environment)

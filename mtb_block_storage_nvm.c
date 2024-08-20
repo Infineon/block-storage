@@ -2,7 +2,8 @@
  * \file mtb_block_storage_nvm.c
  *
  * \brief
- * Utility library for for defining storage to NVM using cyhal_nvm library.
+ * Utility library for defining storage to NVM using cyhal_nvm or cyhal_flash library depending
+ * on HAL version.
  *
  ***************************************************************************************************
  * \copyright
@@ -25,10 +26,87 @@
  **************************************************************************************************/
 #if !defined(COMPONENT_CAT2)
 #include "mtb_block_storage.h"
+#include "cyhal.h"
+#if (CYHAL_DRIVER_AVAILABLE_NVM)
 #include "cyhal_nvm.h"
+#else // if (CYHAL_DRIVER_AVAILABLE_NVM)
+#include "cyhal_flash.h"
+#endif // if (CYHAL_DRIVER_AVAILABLE_NVM)
+
+#if (CYHAL_DRIVER_AVAILABLE_NVM)
+typedef cyhal_nvm_region_info_t mtb_block_storage_nvm_region_info_t;
+typedef cyhal_nvm_t             mtb_block_storage_nvm_t;
+typedef cyhal_nvm_info_t        mtb_block_storage_nvm_info_t;
+#define MTB_BLOCK_STORAGE_NVM_SUPPORT
+#else // (CYHAL_DRIVER_AVAILABLE_NVM)
+typedef cyhal_flash_block_info_t mtb_block_storage_nvm_region_info_t;
+typedef cyhal_flash_t            mtb_block_storage_nvm_t;
+typedef cyhal_flash_info_t       mtb_block_storage_nvm_info_t;
+#define MTB_BLOCK_STORAGE_FLASH_SUPPORT
+#endif // (CYHAL_DRIVER_AVAILABLE_NVM)
 
 
-cyhal_nvm_t obj;
+/* The following API is implemented in block storage as a fallback for older HAL
+   versions that use the now deprecated cyhal_flash.h or do not have access to the
+   cyhal_nvm.h API cyhal_nvm_get_region_for_address. */
+
+/** Find the nvm region based on given address and length.
+ * If "length is zero and address is not in any nvm region" or
+ * if "length is not zero and address is not in any nvm region" or
+ * if "length is not zero and address is one nvm region but address + length goes into another
+ * nvm region", the function will return Null.
+ *
+ * @param[in] obj The nvm object
+ * @param[in] addr The start address of the region to check
+ * @param[in] length The length to check
+ * @return pointer, mtb_block_storage_nvm_region_info_t, to region info
+ */
+const mtb_block_storage_nvm_region_info_t* mtb_block_storage_nvm_get_region_for_address(
+    mtb_block_storage_nvm_t* obj, uint32_t addr,
+    uint32_t length)
+{
+    #if !defined(CYHAL_API_AVAILABLE_NVM_GET_REGION_FOR_ADDRESS)
+    mtb_block_storage_nvm_info_t nvm_info;
+    #if defined(MTB_BLOCK_STORAGE_FLASH_SUPPORT)
+    cyhal_flash_get_info(obj, &nvm_info);
+
+    for (uint32_t block = 0; block < nvm_info.block_count; block++)
+    {
+        if (((addr >= nvm_info.blocks[block].start_address) &&
+             (addr < (nvm_info.blocks[block].start_address + nvm_info.blocks[block].size)) &&
+             (addr + length <=
+              (nvm_info.blocks[block].start_address + nvm_info.blocks[block].size)))
+            )
+        {
+            return (mtb_block_storage_nvm_region_info_t*)&nvm_info.blocks[block];
+        }
+    }
+
+    #else // if defined(MTB_BLOCK_STORAGE_FLASH_SUPPORT)
+    cyhal_nvm_get_info(obj, &nvm_info);
+
+    for (uint32_t region = 0; region < nvm_info.region_count; region++)
+    {
+        if (((addr >= nvm_info.regions[region].start_address) &&
+             (addr < (nvm_info.regions[region].start_address + nvm_info.regions[region].size)) &&
+             (addr + length <=
+              (nvm_info.regions[region].start_address + nvm_info.regions[region].size)))
+            )
+        {
+            return (mtb_block_storage_nvm_region_info_t*)&nvm_info.regions[region];
+        }
+    }
+    #endif // if defined(MTB_BLOCK_STORAGE_FLASH_SUPPORT)
+    return NULL;
+    #else // if !defined(CYHAL_API_AVAILABLE_NVM_GET_REGION_FOR_ADDRESS)
+    return (mtb_block_storage_nvm_region_info_t*)cyhal_nvm_get_region_for_address((cyhal_nvm_t*)obj,
+                                                                                  addr, length);
+    #endif // if !defined(CYHAL_API_AVAILABLE_NVM_GET_REGION_FOR_ADDRESS)
+}
+
+
+mtb_block_storage_nvm_t obj;
+
 #if (CPUSS_FLASHC_ECT == 1)
 static cy_rslt_t WorkFlashProgramRow(
     const uint32_t* addr,
@@ -52,35 +130,32 @@ static uint32_t mtb_block_storage_nvm_read_size(void* context, uint32_t addr)
 //--------------------------------------------------------------------------------------------------
 static uint32_t mtb_block_storage_nvm_program_size(void* context, uint32_t addr)
 {
-    cyhal_nvm_info_t nvm_info;
-    cyhal_nvm_get_info((cyhal_nvm_t*)context, &nvm_info);
     uint32_t programSize = 0;
 
-    for (uint32_t region = 0; region < nvm_info.region_count; region++)
+    const mtb_block_storage_nvm_region_info_t* region_info =
+        mtb_block_storage_nvm_get_region_for_address(
+            (mtb_block_storage_nvm_t*)context, addr, 0);
+    if (NULL != region_info)
     {
-        if ((addr >= nvm_info.regions[region].start_address) &&
-            (addr <
-             (nvm_info.regions[region].start_address + nvm_info.regions[region].size)))
+        //For Flash NVM block size represents the minimum programmable size and sector size
+        //represents the minimum erasable size. As they do not always match, it is necessary to
+        // use the bigger
+        //metric so that program and erase are performed on the same area.
+        //However for RRAM NVM where we don't have an erase operation, block size represents the
+        // actual
+        //minimum programmable size and sector size represents the overall physical
+        // sectorization of the memory.
+        //For this reason we need to select different measures for this function based on the
+        // memory type.
+        #if defined(MTB_BLOCK_STORAGE_NVM_SUPPORT)
+        if (region_info->nvm_type == CYHAL_NVM_TYPE_RRAM)
         {
-            //For Flash NVM block size represents the minimum programmable size and sector size
-            //represents the minimum erasable size. As they do not always match, it is necessary to
-            // use the bigger
-            //metric so that program and erase are performed on the same area.
-            //However for RRAM NVM where we don't have an erase operation, block size represents the
-            // actual
-            //minimum programmable size and sector size represents the overall physical
-            // sectorization of the memory.
-            //For this reason we need to select different measures for this function based on the
-            // memory type.
-            if (nvm_info.regions[region].nvm_type == CYHAL_NVM_TYPE_RRAM)
-            {
-                programSize = (nvm_info.regions[region].block_size);
-            }
-            else
-            {
-                programSize = nvm_info.regions[region].sector_size;
-            }
-            break;
+            programSize = (region_info->block_size);
+        }
+        else
+        #endif // defined(MTB_BLOCK_STORAGE_NVM_SUPPORT)
+        {
+            programSize = region_info->sector_size;
         }
     }
     return programSize;
@@ -92,33 +167,31 @@ static uint32_t mtb_block_storage_nvm_program_size(void* context, uint32_t addr)
 //--------------------------------------------------------------------------------------------------
 static uint32_t mtb_block_storage_nvm_erase_size(void* context, uint32_t addr)
 {
-    cyhal_nvm_info_t nvm_info;
-    cyhal_nvm_get_info((cyhal_nvm_t*)context, &nvm_info);
     uint32_t eraseSize = 0;
 
-    for (uint32_t region = 0; region < nvm_info.region_count; region++)
+    const mtb_block_storage_nvm_region_info_t* region_info =
+        mtb_block_storage_nvm_get_region_for_address(
+            (mtb_block_storage_nvm_t*)context, addr, 0);
+    if (NULL != region_info)
     {
-        if ((addr >= nvm_info.regions[region].start_address) &&
-            (addr <
-             (nvm_info.regions[region].start_address + nvm_info.regions[region].size)))
+        //For Flash NVM block size represents the minimum programmable size and sector size
+        //represents the minimum erasable size. However for RRAM NVM where we don't
+        //have an erase operation, block size represents the actual minimum programmable size
+        //and sector size represents the overal physical sectorization of the memory.
+        //For this reason we need to select different measures for this function based on the
+        //memory type.
+        #if defined(MTB_BLOCK_STORAGE_NVM_SUPPORT)
+        if (region_info->nvm_type == CYHAL_NVM_TYPE_RRAM)
         {
-            //For Flash NVM block size represents the minimum programmable size and sector size
-            //represents the minimum erasable size. However for RRAM NVM where we don't
-            //have an erase operation, block size represents the actual minimum programmable size
-            //and sector size represents the overal physical sectorization ov the memory.
-            //For this reason we need to select different measures for this function based on the
-            //memory type.
-            if (nvm_info.regions[region].nvm_type == CYHAL_NVM_TYPE_RRAM)
-            {
-                eraseSize = (nvm_info.regions[region].block_size);
-            }
-            else
-            {
-                eraseSize = nvm_info.regions[region].sector_size;
-            }
-            break;
+            eraseSize = (region_info->block_size);
+        }
+        else
+        #endif // defined (MTB_BLOCK_STORAGE_NVM_SUPPORT)
+        {
+            eraseSize = region_info->sector_size;
         }
     }
+
     return eraseSize;
 }
 
@@ -128,20 +201,17 @@ static uint32_t mtb_block_storage_nvm_erase_size(void* context, uint32_t addr)
 //--------------------------------------------------------------------------------------------------
 static uint8_t mtb_block_storage_nvm_erase_value(void* context, uint32_t addr)
 {
-    cyhal_nvm_info_t nvm_info;
-    cyhal_nvm_get_info((cyhal_nvm_t*)context, &nvm_info);
     uint8_t eraseValue = 0;
 
-    for (uint32_t region = 0; region < nvm_info.region_count; region++)
+    const mtb_block_storage_nvm_region_info_t* region_info =
+        mtb_block_storage_nvm_get_region_for_address(
+            (mtb_block_storage_nvm_t*)context, addr, 0);
+
+    if (NULL != region_info)
     {
-        if ((addr >= nvm_info.regions[region].start_address) &&
-            (addr <
-             (nvm_info.regions[region].start_address + nvm_info.regions[region].size)))
-        {
-            eraseValue = nvm_info.regions[region].erase_value;
-            break;
-        }
+        eraseValue = region_info->erase_value;
     }
+
     return eraseValue;
 }
 
@@ -152,7 +222,11 @@ static uint8_t mtb_block_storage_nvm_erase_value(void* context, uint32_t addr)
 static cy_rslt_t mtb_block_storage_nvm_read(void* context, uint32_t addr, uint32_t length,
                                             uint8_t* buf)
 {
+    #if (CYHAL_DRIVER_AVAILABLE_NVM)
     return cyhal_nvm_read((cyhal_nvm_t*)context, addr, buf, length);
+    #else // if (CYHAL_DRIVER_AVAILABLE_NVM)
+    return cyhal_flash_read((cyhal_flash_t*)context, addr, buf, length);
+    #endif // if (CYHAL_DRIVER_AVAILABLE_NVM)
 }
 
 
@@ -170,25 +244,22 @@ static cy_rslt_t mtb_block_storage_nvm_program(void* context, uint32_t addr, uin
         result = MTB_BLOCK_STORAGE_INVALID_SIZE_ERROR;
     }
 
-    #if (CPUSS_FLASHC_ECT == 1)
     if (result == CY_RSLT_SUCCESS)
     {
         for (uint32_t loc = addr; result == CY_RSLT_SUCCESS && loc < addr + length;
              loc += prog_size, buf += prog_size)
         {
+            #if (CPUSS_FLASHC_ECT == 1)
             result = WorkFlashProgramRow((uint32_t*)addr, (const uint32_t*)buf, prog_size);
-        }
-    }
-    #else
-    if (result == CY_RSLT_SUCCESS)
-    {
-        for (uint32_t loc = addr; result == CY_RSLT_SUCCESS && loc < addr + length;
-             loc += prog_size, buf += prog_size)
-        {
+            #else // if (CPUSS_FLASHC_ECT == 1)
+            #if (CYHAL_DRIVER_AVAILABLE_NVM)
             result = cyhal_nvm_program((cyhal_nvm_t*)context, loc, (const uint32_t*)buf);
+            #else // if (CYHAL_DRIVER_AVAILABLE_NVM)
+            result = cyhal_flash_program((cyhal_flash_t*)context, loc, (const uint32_t*)buf);
+            #endif // if (CYHAL_DRIVER_AVAILABLE_NVM)
+            #endif // if (CPUSS_FLASHC_ECT == 1)
         }
     }
-    #endif // if (CPUSS_FLASHC_ECT == 1)
     return result;
 }
 
@@ -210,13 +281,11 @@ static cy_rslt_t mtb_block_storage_nvm_program(void* context, uint32_t addr, uin
 * The device's program size, needed to determine program row data size in bits
 *
 *******************************************************************************/
-
-
 static cy_rslt_t WorkFlashProgramRow(const uint32_t* addr, const uint32_t* data, uint32_t prog_size)
 {
     cy_rslt_t result = CYHAL_NVM_RSLT_ERR_ADDRESS;
     cy_stc_flash_programrow_config_t config;
-    cy_en_flashdrv_status_t status;
+    cy_en_flashdrv_status_t status = CY_FLASH_DRV_SUCCESS;
     const uint32_t* cur_addr = (uint32_t*)addr;
     const uint32_t* cur_data = (uint32_t*)data;
 
@@ -277,20 +346,22 @@ static cy_rslt_t WorkFlashProgramRow(const uint32_t* addr, const uint32_t* data,
 //--------------------------------------------------------------------------------------------------
 static bool mtb_block_storage_nvm_is_erase_required(void* context, uint32_t addr, uint32_t length)
 {
-    cyhal_nvm_info_t nvm_info;
-    cyhal_nvm_get_info((cyhal_nvm_t*)context, &nvm_info);
     bool isEraseRequired = true;
 
-    for (uint32_t region = 0; region < nvm_info.region_count; region++)
+    #if !defined(MTB_BLOCK_STORAGE_FLASH_SUPPORT)
+    const mtb_block_storage_nvm_region_info_t* region_info =
+        mtb_block_storage_nvm_get_region_for_address(
+            (mtb_block_storage_nvm_t*)context, addr, length);
+    if (NULL != region_info)
     {
-        if ((addr >= nvm_info.regions[region].start_address) &&
-            (addr+length <
-             (nvm_info.regions[region].start_address + nvm_info.regions[region].size)))
-        {
-            isEraseRequired = nvm_info.regions[region].is_erase_required;
-            break;
-        }
+        isEraseRequired = region_info->is_erase_required;
     }
+    #else // if !defined(MTB_BLOCK_STORAGE_FLASH_SUPPORT)
+    CY_UNUSED_PARAMETER(context);
+    CY_UNUSED_PARAMETER(addr);
+    CY_UNUSED_PARAMETER(length);
+    #endif // if !defined(MTB_BLOCK_STORAGE_FLASH_SUPPORT)
+
     return isEraseRequired;
 }
 
@@ -313,7 +384,11 @@ static cy_rslt_t mtb_block_storage_nvm_erase(void* context, uint32_t addr, uint3
         for (uint32_t loc = addr; result == CY_RSLT_SUCCESS && loc < addr + length;
              loc += erase_size)
         {
+            #if (CYHAL_DRIVER_AVAILABLE_NVM)
             result = cyhal_nvm_erase((cyhal_nvm_t*)context, loc);
+            #else // if (CYHAL_DRIVER_AVAILABLE_NVM)
+            result = cyhal_flash_erase((cyhal_flash_t*)context, loc);
+            #endif // if (CYHAL_DRIVER_AVAILABLE_NVM)
         }
     }
 
@@ -333,7 +408,7 @@ static cy_rslt_t mtb_block_storage_nvm_program_nb(void* context, uint32_t addr, 
     CY_UNUSED_PARAMETER(length);
     CY_UNUSED_PARAMETER(buf);
     return MTB_BLOCK_STORAGE_NOT_SUPPORTED_ERROR;
-    #else
+    #else // if !defined(MTB_BLOCK_STORAGE_NON_BLOCKING_SUPPORTED)
 
     uint32_t prog_size = mtb_block_storage_nvm_program_size(context, addr);
     cy_rslt_t result = CY_RSLT_SUCCESS;
@@ -348,14 +423,19 @@ static cy_rslt_t mtb_block_storage_nvm_program_nb(void* context, uint32_t addr, 
         for (uint32_t loc = addr; result == CY_RSLT_SUCCESS && loc < addr + length;
              loc += prog_size, buf += prog_size)
         {
+            #if (CYHAL_DRIVER_AVAILABLE_NVM)
             result = cyhal_nvm_start_program((cyhal_nvm_t*)context, loc, (const uint32_t*)buf);
             while (!cyhal_nvm_is_operation_complete((cyhal_nvm_t*)context))
+            #else // if (CYHAL_DRIVER_AVAILABLE_NVM)
+            result = cyhal_flash_start_program((cyhal_flash_t*)context, loc, (const uint32_t*)buf);
+            while (!cyhal_flash_is_operation_complete((cyhal_flash_t*)context))
+            #endif // if (CYHAL_DRIVER_AVAILABLE_NVM)
             {
             }
         }
     }
     return result;
-    #endif // !defined(MTB_BLOCK_STORAGE_NON_BLOCKING_SUPPORTED)
+    #endif // if !defined(MTB_BLOCK_STORAGE_NON_BLOCKING_SUPPORTED)
 }
 
 
@@ -369,7 +449,7 @@ static cy_rslt_t mtb_block_storage_nvm_erase_nb(void* context, uint32_t addr, ui
     CY_UNUSED_PARAMETER(addr);
     CY_UNUSED_PARAMETER(length);
     return MTB_BLOCK_STORAGE_NOT_SUPPORTED_ERROR;
-    #else
+    #else // if !defined(MTB_BLOCK_STORAGE_NON_BLOCKING_SUPPORTED)
     uint32_t erase_size = mtb_block_storage_nvm_erase_size(context, addr);
     cy_rslt_t result = CY_RSLT_SUCCESS;
 
@@ -383,8 +463,13 @@ static cy_rslt_t mtb_block_storage_nvm_erase_nb(void* context, uint32_t addr, ui
         for (uint32_t loc = addr; result == CY_RSLT_SUCCESS && loc < addr + length;
              loc += erase_size)
         {
+            #if (CYHAL_DRIVER_AVAILABLE_NVM)
             result = cyhal_nvm_start_erase((cyhal_nvm_t*)context, loc);
             while (!cyhal_nvm_is_operation_complete((cyhal_nvm_t*)context))
+            #else // if (CYHAL_DRIVER_AVAILABLE_NVM)
+            result = cyhal_flash_start_erase((cyhal_flash_t*)context, loc);
+            while (!cyhal_flash_is_operation_complete((cyhal_flash_t*)context))
+            #endif // if (CYHAL_DRIVER_AVAILABLE_NVM)
             {
             }
         }
@@ -399,19 +484,14 @@ static cy_rslt_t mtb_block_storage_nvm_erase_nb(void* context, uint32_t addr, ui
 //--------------------------------------------------------------------------------------------------
 static bool mtb_block_storage_nvm_is_in_range(void* context, uint32_t addr, uint32_t length)
 {
-    cyhal_nvm_info_t nvm_info;
-    cyhal_nvm_get_info((cyhal_nvm_t*)context, &nvm_info);
     bool isInRange = false;
 
-    for (uint32_t region = 0; region < nvm_info.region_count; region++)
+    const mtb_block_storage_nvm_region_info_t* region_info =
+        mtb_block_storage_nvm_get_region_for_address(
+            (mtb_block_storage_nvm_t*)context, addr, length);
+    if (NULL != region_info)
     {
-        if ((addr >= nvm_info.regions[region].start_address) &&
-            (addr+length <=
-             (nvm_info.regions[region].start_address + nvm_info.regions[region].size)))
-        {
-            isInRange = true;
-            break;
-        }
+        isInRange = true;
     }
     return isInRange;
 }
@@ -431,7 +511,11 @@ cy_rslt_t mtb_block_storage_nvm_create(mtb_block_storage_t* bsd)
 
     if (result == CY_RSLT_SUCCESS)
     {
+        #if (CYHAL_DRIVER_AVAILABLE_NVM)
         result = cyhal_nvm_init(&obj);
+        #else // (CYHAL_DRIVER_AVAILABLE_NVM)
+        result = cyhal_flash_init(&obj);
+        #endif // (CYHAL_DRIVER_AVAILABLE_NVM)
     }
 
     if (result == CY_RSLT_SUCCESS)
@@ -451,7 +535,11 @@ cy_rslt_t mtb_block_storage_nvm_create(mtb_block_storage_t* bsd)
     }
     else
     {
+        #if (CYHAL_DRIVER_AVAILABLE_NVM)
         cyhal_nvm_free(&obj);
+        #else
+        cyhal_flash_free(&obj);
+        #endif
     }
 
     return result;

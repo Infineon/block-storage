@@ -73,7 +73,7 @@ The block storage object is as follows:
 * [mtb-pdl-cat2](https://github.com/infineon/mtb-pdl-cat2)
 
 ## More information
-* [API Reference Guide](https://github.com/Infineon)
+* [API Reference Guide](https://infineon.github.io/block-storage/html/index.html)
 * [Cypress Semiconductor, an Infineon Technologies Company](http://www.infineon.com)
 * [Infineon GitHub](https://github.com/infineon)
 * [ModusToolbox™](https://www.cypress.com/products/modustoolbox-software-environment)
