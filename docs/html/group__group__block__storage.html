@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.9.2"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Block Storage (block-storage)</title>
+<title>(block-storage)</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -27,7 +27,7 @@
  <tr style="height: 56px;">
   <td id="projectlogo"><a href="http://www.cypress.com/"><img alt="Logo" src="logo.png"/></a></td>
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">Block Storage (block-storage)</div>
+   <div id="projectname">(block-storage)</div>
   </td>
  </tr>
  </tbody>
@@ -100,28 +100,28 @@ Getting Started</h1>
 </div><!-- fragment --></li>
 <li>Initialize the block storage device Example initialization using the pre implemented device built on top of HAL NVM <div class="fragment"><div class="line">    <a class="code hl_struct" href="group__group__block__storage.html#structmtb__block__storage__t">mtb_block_storage_t</a> my_nvm_bsd;</div>
 <div class="line">    <a class="code hl_function" href="group__group__block__storage.html#gaf015526bd6a314dbfd78e2d12ad0533d">mtb_block_storage_nvm_create</a>(&amp;my_nvm_bsd);</div>
-<div class="ttc" id="agroup__group__block__storage_html_gaf015526bd6a314dbfd78e2d12ad0533d"><div class="ttname"><a href="group__group__block__storage.html#gaf015526bd6a314dbfd78e2d12ad0533d">mtb_block_storage_nvm_create</a></div><div class="ttdeci">cy_rslt_t mtb_block_storage_nvm_create(mtb_block_storage_t *bsd)</div><div class="ttdoc">Function to create the block storage elements for devices that have HAL support.</div><div class="ttdef"><b>Definition:</b> mtb_block_storage_nvm.c:503</div></div>
-<div class="ttc" id="agroup__group__block__storage_html_structmtb__block__storage__t"><div class="ttname"><a href="group__group__block__storage.html#structmtb__block__storage__t">mtb_block_storage_t</a></div><div class="ttdoc">Block device interface.</div><div class="ttdef"><b>Definition:</b> mtb_block_storage.h:186</div></div>
+<div class="ttc" id="agroup__group__block__storage_html_gaf015526bd6a314dbfd78e2d12ad0533d"><div class="ttname"><a href="group__group__block__storage.html#gaf015526bd6a314dbfd78e2d12ad0533d">mtb_block_storage_nvm_create</a></div><div class="ttdeci">cy_rslt_t mtb_block_storage_nvm_create(mtb_block_storage_t *bsd)</div><div class="ttdoc">Function to create the block storage elements for devices that have HAL support.</div><div class="ttdef"><b>Definition:</b> mtb_block_storage_nvm.c:529</div></div>
+<div class="ttc" id="agroup__group__block__storage_html_structmtb__block__storage__t"><div class="ttname"><a href="group__group__block__storage.html#structmtb__block__storage__t">mtb_block_storage_t</a></div><div class="ttdoc">Block device interface.</div><div class="ttdef"><b>Definition:</b> mtb_block_storage.h:188</div></div>
 </div><!-- fragment --></li>
 <li>The library should now be ready to perform operations.<ul>
 <li>Program operation. <div class="fragment"><div class="line">    uint8_t data[MAX_PROG_SIZE];</div>
 <div class="line">    uint32_t programSize = my_nvm_bsd-&gt;<a class="code hl_variable" href="group__group__block__storage.html#a04052bfa9b52af3b3d5668768cebd98b">get_program_size</a>(my_nvm_bsd-&gt;<a class="code hl_variable" href="group__group__block__storage.html#a27d8bdfefc3b80ef1d8c8307669d5712">context</a>, address);</div>
 <div class="line">    result = my_nvm_bsd-&gt;<a class="code hl_variable" href="group__group__block__storage.html#af846e706b42e31d7950e3a4a75bd14d7">program</a>(my_nvm_bsd-&gt;<a class="code hl_variable" href="group__group__block__storage.html#a27d8bdfefc3b80ef1d8c8307669d5712">context</a>, address, programSize, data);</div>
 <div class="line">    CY_ASSERT(result == CY_RSLT_SUCCESS);</div>
-<div class="ttc" id="agroup__group__block__storage_html_a04052bfa9b52af3b3d5668768cebd98b"><div class="ttname"><a href="group__group__block__storage.html#a04052bfa9b52af3b3d5668768cebd98b">mtb_block_storage_t::get_program_size</a></div><div class="ttdeci">mtb_block_storage_program_size_t get_program_size</div><div class="ttdoc">Function to get program size for an address.</div><div class="ttdef"><b>Definition:</b> mtb_block_storage.h:194</div></div>
-<div class="ttc" id="agroup__group__block__storage_html_a27d8bdfefc3b80ef1d8c8307669d5712"><div class="ttname"><a href="group__group__block__storage.html#a27d8bdfefc3b80ef1d8c8307669d5712">mtb_block_storage_t::context</a></div><div class="ttdeci">void * context</div><div class="ttdoc">Context object that can be used in the block device implementation.</div><div class="ttdef"><b>Definition:</b> mtb_block_storage.h:187</div></div>
-<div class="ttc" id="agroup__group__block__storage_html_af846e706b42e31d7950e3a4a75bd14d7"><div class="ttname"><a href="group__group__block__storage.html#af846e706b42e31d7950e3a4a75bd14d7">mtb_block_storage_t::program</a></div><div class="ttdeci">mtb_block_storage_program_t program</div><div class="ttdoc">Function to program to device.</div><div class="ttdef"><b>Definition:</b> mtb_block_storage.h:205</div></div>
+<div class="ttc" id="agroup__group__block__storage_html_a04052bfa9b52af3b3d5668768cebd98b"><div class="ttname"><a href="group__group__block__storage.html#a04052bfa9b52af3b3d5668768cebd98b">mtb_block_storage_t::get_program_size</a></div><div class="ttdeci">mtb_block_storage_program_size_t get_program_size</div><div class="ttdoc">Function to get program size for an address.</div><div class="ttdef"><b>Definition:</b> mtb_block_storage.h:196</div></div>
+<div class="ttc" id="agroup__group__block__storage_html_a27d8bdfefc3b80ef1d8c8307669d5712"><div class="ttname"><a href="group__group__block__storage.html#a27d8bdfefc3b80ef1d8c8307669d5712">mtb_block_storage_t::context</a></div><div class="ttdeci">void * context</div><div class="ttdoc">Context object that can be used in the block device implementation.</div><div class="ttdef"><b>Definition:</b> mtb_block_storage.h:189</div></div>
+<div class="ttc" id="agroup__group__block__storage_html_af846e706b42e31d7950e3a4a75bd14d7"><div class="ttname"><a href="group__group__block__storage.html#af846e706b42e31d7950e3a4a75bd14d7">mtb_block_storage_t::program</a></div><div class="ttdeci">mtb_block_storage_program_t program</div><div class="ttdoc">Function to program to device.</div><div class="ttdef"><b>Definition:</b> mtb_block_storage.h:207</div></div>
 </div><!-- fragment --></li>
 <li>Read operation. <div class="fragment"><div class="line">    uint8_t read_data[10];</div>
 <div class="line">    result = my_nvm_bsd-&gt;<a class="code hl_variable" href="group__group__block__storage.html#a75886e0eb4c32fb4244bf15d5c521fa7">read</a>(my_nvm_bsd-&gt;<a class="code hl_variable" href="group__group__block__storage.html#a27d8bdfefc3b80ef1d8c8307669d5712">context</a>, address, <span class="keyword">sizeof</span>(read_data), read_data);</div>
 <div class="line">    CY_ASSERT(result == CY_RSLT_SUCCESS);</div>
-<div class="ttc" id="agroup__group__block__storage_html_a75886e0eb4c32fb4244bf15d5c521fa7"><div class="ttname"><a href="group__group__block__storage.html#a75886e0eb4c32fb4244bf15d5c521fa7">mtb_block_storage_t::read</a></div><div class="ttdeci">mtb_block_storage_read_t read</div><div class="ttdoc">Function to read from device.</div><div class="ttdef"><b>Definition:</b> mtb_block_storage.h:204</div></div>
+<div class="ttc" id="agroup__group__block__storage_html_a75886e0eb4c32fb4244bf15d5c521fa7"><div class="ttname"><a href="group__group__block__storage.html#a75886e0eb4c32fb4244bf15d5c521fa7">mtb_block_storage_t::read</a></div><div class="ttdeci">mtb_block_storage_read_t read</div><div class="ttdoc">Function to read from device.</div><div class="ttdef"><b>Definition:</b> mtb_block_storage.h:206</div></div>
 </div><!-- fragment --></li>
 <li>Erase operation. <div class="fragment"><div class="line">    uint32_t eraseSize = my_nvm_bsd-&gt;<a class="code hl_variable" href="group__group__block__storage.html#a55cbb7162d29c1d87ee0f1b011f9f3fa">get_erase_size</a>(my_nvm_bsd-&gt;<a class="code hl_variable" href="group__group__block__storage.html#a27d8bdfefc3b80ef1d8c8307669d5712">context</a>, address);</div>
 <div class="line">    result = my_nvm_bsd-&gt;<a class="code hl_variable" href="group__group__block__storage.html#a1ff632b7d402bc19284f3bc3d55f3ae2">erase</a>(my_nvm_bsd-&gt;<a class="code hl_variable" href="group__group__block__storage.html#a27d8bdfefc3b80ef1d8c8307669d5712">context</a>, address, eraseSize);</div>
 <div class="line">    CY_ASSERT(result == CY_RSLT_SUCCESS);</div>
-<div class="ttc" id="agroup__group__block__storage_html_a1ff632b7d402bc19284f3bc3d55f3ae2"><div class="ttname"><a href="group__group__block__storage.html#a1ff632b7d402bc19284f3bc3d55f3ae2">mtb_block_storage_t::erase</a></div><div class="ttdeci">mtb_block_storage_erase_t erase</div><div class="ttdoc">Function to erase device.</div><div class="ttdef"><b>Definition:</b> mtb_block_storage.h:206</div></div>
-<div class="ttc" id="agroup__group__block__storage_html_a55cbb7162d29c1d87ee0f1b011f9f3fa"><div class="ttname"><a href="group__group__block__storage.html#a55cbb7162d29c1d87ee0f1b011f9f3fa">mtb_block_storage_t::get_erase_size</a></div><div class="ttdeci">mtb_block_storage_erase_size_t get_erase_size</div><div class="ttdoc">Function to get erase size for an address.</div><div class="ttdef"><b>Definition:</b> mtb_block_storage.h:197</div></div>
+<div class="ttc" id="agroup__group__block__storage_html_a1ff632b7d402bc19284f3bc3d55f3ae2"><div class="ttname"><a href="group__group__block__storage.html#a1ff632b7d402bc19284f3bc3d55f3ae2">mtb_block_storage_t::erase</a></div><div class="ttdeci">mtb_block_storage_erase_t erase</div><div class="ttdoc">Function to erase device.</div><div class="ttdef"><b>Definition:</b> mtb_block_storage.h:208</div></div>
+<div class="ttc" id="agroup__group__block__storage_html_a55cbb7162d29c1d87ee0f1b011f9f3fa"><div class="ttname"><a href="group__group__block__storage.html#a55cbb7162d29c1d87ee0f1b011f9f3fa">mtb_block_storage_t::get_erase_size</a></div><div class="ttdeci">mtb_block_storage_erase_size_t get_erase_size</div><div class="ttdoc">Function to get erase size for an address.</div><div class="ttdef"><b>Definition:</b> mtb_block_storage.h:199</div></div>
 </div><!-- fragment --></li>
 </ul>
 </li>
@@ -575,7 +575,7 @@ Function to check whether the memory type does require erase operation. </td></t
 <div id="nav-path" class="navpath">
     <ul>
         <li class="footer">
-            Generated for <b>Block Storage (block-storage)</b> by <b>Cypress Semiconductor Corporation</b>.
+            Generated for <b>(block-storage)</b> by <b>Cypress Semiconductor Corporation</b>.
             All rights reserved.
         </li>
     </ul>

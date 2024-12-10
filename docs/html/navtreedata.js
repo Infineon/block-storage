@@ -24,7 +24,7 @@
 */
 var NAVTREE =
 [
-  [ "Block Storage (block-storage)", "index.html", [
+  [ "(block-storage)", "index.html", [
     [ "Block Storage Library", "index.html", [
       [ "Overview", "index.html#autotoc_md1", null ],
       [ "Features", "index.html#autotoc_md2", null ],

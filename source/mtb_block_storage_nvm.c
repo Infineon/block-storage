@@ -26,12 +26,16 @@
  **************************************************************************************************/
 #if !defined(COMPONENT_CAT2)
 #include "mtb_block_storage.h"
+#if defined(CY_USING_HAL) || defined(CY_USING_HAL_LITE)
 #include "cyhal.h"
 #if (CYHAL_DRIVER_AVAILABLE_NVM)
 #include "cyhal_nvm.h"
 #else // if (CYHAL_DRIVER_AVAILABLE_NVM)
 #include "cyhal_flash.h"
 #endif // if (CYHAL_DRIVER_AVAILABLE_NVM)
+
+
+#define MTB_HAL_NVM_TYPE_RRAM  CYHAL_NVM_TYPE_RRAM
 
 #if (CYHAL_DRIVER_AVAILABLE_NVM)
 typedef cyhal_nvm_region_info_t mtb_block_storage_nvm_region_info_t;
@@ -105,6 +109,22 @@ const mtb_block_storage_nvm_region_info_t* mtb_block_storage_nvm_get_region_for_
 }
 
 
+#else // if defined(CY_USING_HAL) || defined(CY_USING_HAL_LITE)
+
+
+#include "mtb_hal.h"
+
+typedef mtb_hal_nvm_region_info_t mtb_block_storage_nvm_region_info_t;
+typedef mtb_hal_nvm_t             mtb_block_storage_nvm_t;
+typedef mtb_hal_nvm_info_t        mtb_block_storage_nvm_info_t;
+
+/** Deprecated, for backwards compatibility */
+#define mtb_block_storage_nvm_get_region_for_address mtb_hal_nvm_get_region_for_address
+
+#define MTB_BLOCK_STORAGE_NVM_SUPPORT
+
+#endif // if defined(CY_USING_HAL) || defined(CY_USING_HAL_LITE)
+
 mtb_block_storage_nvm_t obj;
 
 #if (CPUSS_FLASHC_ECT == 1)
@@ -148,7 +168,7 @@ static uint32_t mtb_block_storage_nvm_program_size(void* context, uint32_t addr)
         //For this reason we need to select different measures for this function based on the
         // memory type.
         #if defined(MTB_BLOCK_STORAGE_NVM_SUPPORT)
-        if (region_info->nvm_type == CYHAL_NVM_TYPE_RRAM)
+        if (region_info->nvm_type == MTB_HAL_NVM_TYPE_RRAM)
         {
             programSize = (region_info->block_size);
         }
@@ -181,7 +201,7 @@ static uint32_t mtb_block_storage_nvm_erase_size(void* context, uint32_t addr)
         //For this reason we need to select different measures for this function based on the
         //memory type.
         #if defined(MTB_BLOCK_STORAGE_NVM_SUPPORT)
-        if (region_info->nvm_type == CYHAL_NVM_TYPE_RRAM)
+        if (region_info->nvm_type == MTB_HAL_NVM_TYPE_RRAM)
         {
             eraseSize = (region_info->block_size);
         }
@@ -222,7 +242,9 @@ static uint8_t mtb_block_storage_nvm_erase_value(void* context, uint32_t addr)
 static cy_rslt_t mtb_block_storage_nvm_read(void* context, uint32_t addr, uint32_t length,
                                             uint8_t* buf)
 {
-    #if (CYHAL_DRIVER_AVAILABLE_NVM)
+    #if (MTB_HAL_DRIVER_AVAILABLE_NVM)
+    return mtb_hal_nvm_read((mtb_hal_nvm_t*)context, addr, buf, length);
+    #elif (CYHAL_DRIVER_AVAILABLE_NVM)
     return cyhal_nvm_read((cyhal_nvm_t*)context, addr, buf, length);
     #else // if (CYHAL_DRIVER_AVAILABLE_NVM)
     return cyhal_flash_read((cyhal_flash_t*)context, addr, buf, length);
@@ -252,7 +274,9 @@ static cy_rslt_t mtb_block_storage_nvm_program(void* context, uint32_t addr, uin
             #if (CPUSS_FLASHC_ECT == 1)
             result = WorkFlashProgramRow((uint32_t*)addr, (const uint32_t*)buf, prog_size);
             #else // if (CPUSS_FLASHC_ECT == 1)
-            #if (CYHAL_DRIVER_AVAILABLE_NVM)
+            #if (MTB_HAL_DRIVER_AVAILABLE_NVM)
+            result = mtb_hal_nvm_program((mtb_hal_nvm_t*)context, loc, (const uint32_t*)buf);
+            #elif (CYHAL_DRIVER_AVAILABLE_NVM)
             result = cyhal_nvm_program((cyhal_nvm_t*)context, loc, (const uint32_t*)buf);
             #else // if (CYHAL_DRIVER_AVAILABLE_NVM)
             result = cyhal_flash_program((cyhal_flash_t*)context, loc, (const uint32_t*)buf);
@@ -384,7 +408,9 @@ static cy_rslt_t mtb_block_storage_nvm_erase(void* context, uint32_t addr, uint3
         for (uint32_t loc = addr; result == CY_RSLT_SUCCESS && loc < addr + length;
              loc += erase_size)
         {
-            #if (CYHAL_DRIVER_AVAILABLE_NVM)
+            #if (MTB_HAL_DRIVER_AVAILABLE_NVM)
+            result = mtb_hal_nvm_erase((mtb_hal_nvm_t*)context, loc);
+            #elif (CYHAL_DRIVER_AVAILABLE_NVM)
             result = cyhal_nvm_erase((cyhal_nvm_t*)context, loc);
             #else // if (CYHAL_DRIVER_AVAILABLE_NVM)
             result = cyhal_flash_erase((cyhal_flash_t*)context, loc);
@@ -509,6 +535,7 @@ cy_rslt_t mtb_block_storage_nvm_create(mtb_block_storage_t* bsd)
         result = MTB_BLOCK_STORAGE_INVALID_INPUT_ERROR;
     }
 
+    #if !defined(MTB_HAL_DRIVER_AVAILABLE_NVM)
     if (result == CY_RSLT_SUCCESS)
     {
         #if (CYHAL_DRIVER_AVAILABLE_NVM)
@@ -517,6 +544,7 @@ cy_rslt_t mtb_block_storage_nvm_create(mtb_block_storage_t* bsd)
         result = cyhal_flash_init(&obj);
         #endif // (CYHAL_DRIVER_AVAILABLE_NVM)
     }
+    #endif // !defined(MTB_HAL_DRIVER_AVAILABLE_NVM)
 
     if (result == CY_RSLT_SUCCESS)
     {
@@ -533,6 +561,7 @@ cy_rslt_t mtb_block_storage_nvm_create(mtb_block_storage_t* bsd)
         bsd->is_erase_required = mtb_block_storage_nvm_is_erase_required;
         bsd->context = &obj;
     }
+    #if !defined(MTB_HAL_DRIVER_AVAILABLE_NVM)
     else
     {
         #if (CYHAL_DRIVER_AVAILABLE_NVM)
@@ -541,7 +570,7 @@ cy_rslt_t mtb_block_storage_nvm_create(mtb_block_storage_t* bsd)
         cyhal_flash_free(&obj);
         #endif
     }
-
+    #endif // !defined(MTB_HAL_DRIVER_AVAILABLE_NVM)
     return result;
 }
 

@@ -23,6 +23,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **************************************************************************************************/
+#pragma once
 
 
 #include "cy_result.h"
@@ -39,7 +40,8 @@
     CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CY_RSLT_MODULE_ABSTRACTION_BLOCK_STORAGE, 3)
 
 //Only limit support for non blocking functionality to PSoC6 for the moment
-#if (defined(COMPONENT_CAT1A) && !defined(CY_DEVICE_TVIIBE))
+#if (defined(COMPONENT_CAT1A) && !defined(CY_DEVICE_TVIIBE)) && \
+    !defined(MTB_HAL_DRIVER_AVAILABLE_NVM)
 #define MTB_BLOCK_STORAGE_NON_BLOCKING_SUPPORTED
 #endif
 /**
