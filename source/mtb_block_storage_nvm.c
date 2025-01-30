@@ -272,7 +272,7 @@ static cy_rslt_t mtb_block_storage_nvm_program(void* context, uint32_t addr, uin
              loc += prog_size, buf += prog_size)
         {
             #if (CPUSS_FLASHC_ECT == 1)
-            result = WorkFlashProgramRow((uint32_t*)addr, (const uint32_t*)buf, prog_size);
+            result = WorkFlashProgramRow((uint32_t*)loc, (const uint32_t*)buf, prog_size);
             #else // if (CPUSS_FLASHC_ECT == 1)
             #if (MTB_HAL_DRIVER_AVAILABLE_NVM)
             result = mtb_hal_nvm_program((mtb_hal_nvm_t*)context, loc, (const uint32_t*)buf);
@@ -307,7 +307,7 @@ static cy_rslt_t mtb_block_storage_nvm_program(void* context, uint32_t addr, uin
 *******************************************************************************/
 static cy_rslt_t WorkFlashProgramRow(const uint32_t* addr, const uint32_t* data, uint32_t prog_size)
 {
-    cy_rslt_t result = CYHAL_NVM_RSLT_ERR_ADDRESS;
+    cy_rslt_t result = MTB_BLOCK_STORAGE_INVALID_INPUT_ERROR;
     cy_stc_flash_programrow_config_t config;
     cy_en_flashdrv_status_t status = CY_FLASH_DRV_SUCCESS;
     const uint32_t* cur_addr = (uint32_t*)addr;
