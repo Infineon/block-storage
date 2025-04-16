@@ -24,6 +24,5 @@ var group__group__block__storage =
     [ "mtb_block_storage_program_nb_t", "group__group__block__storage.html#ga2218ea431685bb345a4b96b340ad60b5", null ],
     [ "mtb_block_storage_erase_nb_t", "group__group__block__storage.html#ga66c2486cfe26ec5ccb887bfd77696588", null ],
     [ "mtb_block_storage_is_in_range_t", "group__group__block__storage.html#ga30b156453c0a6806cdce9399bec274ae", null ],
-    [ "mtb_block_storage_is_erase_required_t", "group__group__block__storage.html#gaa23135e9b2e281903586a964eb3258a1", null ],
-    [ "mtb_block_storage_nvm_create", "group__group__block__storage.html#gaf015526bd6a314dbfd78e2d12ad0533d", null ]
+    [ "mtb_block_storage_is_erase_required_t", "group__group__block__storage.html#gaa23135e9b2e281903586a964eb3258a1", null ]
 ];

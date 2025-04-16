@@ -26,11 +26,11 @@
  **************************************************************************************************/
 #if !defined(COMPONENT_CAT2)
 #include "mtb_block_storage.h"
+#if (CYHAL_DRIVER_AVAILABLE_NVM) || (CYHAL_DRIVER_AVAILABLE_FLASH) || (MTB_HAL_DRIVER_AVAILABLE_NVM)
 #if defined(CY_USING_HAL) || defined(CY_USING_HAL_LITE)
-#include "cyhal.h"
 #if (CYHAL_DRIVER_AVAILABLE_NVM)
 #include "cyhal_nvm.h"
-#else // if (CYHAL_DRIVER_AVAILABLE_NVM)
+#elif (CYHAL_DRIVER_AVAILABLE_FLASH)
 #include "cyhal_flash.h"
 #endif // if (CYHAL_DRIVER_AVAILABLE_NVM)
 
@@ -125,8 +125,6 @@ typedef mtb_hal_nvm_info_t        mtb_block_storage_nvm_info_t;
 
 #endif // if defined(CY_USING_HAL) || defined(CY_USING_HAL_LITE)
 
-mtb_block_storage_nvm_t obj;
-
 #if (CPUSS_FLASHC_ECT == 1)
 static cy_rslt_t WorkFlashProgramRow(
     const uint32_t* addr,
@@ -175,7 +173,7 @@ static uint32_t mtb_block_storage_nvm_program_size(void* context, uint32_t addr)
         else
         #endif // defined(MTB_BLOCK_STORAGE_NVM_SUPPORT)
         {
-            programSize = region_info->sector_size;
+            programSize = region_info->block_size;
         }
     }
     return programSize;
@@ -328,6 +326,12 @@ static cy_rslt_t WorkFlashProgramRow(const uint32_t* addr, const uint32_t* data,
             prog_data_size = CY_FLASH_PROGRAMROW_DATA_SIZE_4096BIT;
             found_prog_data_size = true;
             page_increase = 512;
+            break;
+
+        case 4:
+            prog_data_size = CY_FLASH_PROGRAMROW_DATA_SIZE_32BIT;
+            found_prog_data_size = true;
+            page_increase = 4;
             break;
 
         default:
@@ -526,25 +530,37 @@ static bool mtb_block_storage_nvm_is_in_range(void* context, uint32_t addr, uint
 //--------------------------------------------------------------------------------------------------
 // mtb_block_storage_nvm_create
 //--------------------------------------------------------------------------------------------------
-cy_rslt_t mtb_block_storage_nvm_create(mtb_block_storage_t* bsd)
+#if (MTB_HAL_DRIVER_AVAILABLE_NVM)
+cy_rslt_t mtb_block_storage_create_hal_nvm(mtb_block_storage_t* bsd, mtb_hal_nvm_t* obj)
+#else
+//--------------------------------------------------------------------------------------------------
+// mtb_block_storage_create_hal_nvm
+//--------------------------------------------------------------------------------------------------
+cy_rslt_t mtb_block_storage_create_hal_nvm(mtb_block_storage_t* bsd, void* obj)
+#endif
 {
     cy_rslt_t result = CY_RSLT_SUCCESS;
+
+    //Holds the hal NVM object, that is used in case of classic HAL.
+    //Also used in HAL next as a dummy object if the NVM object pointer passed in is NULL.
+    static mtb_block_storage_nvm_t hal_obj;
 
     if (NULL == bsd)
     {
         result = MTB_BLOCK_STORAGE_INVALID_INPUT_ERROR;
     }
 
-    #if !defined(MTB_HAL_DRIVER_AVAILABLE_NVM)
+    #if !(MTB_HAL_DRIVER_AVAILABLE_NVM)
+    CY_UNUSED_PARAMETER(obj);
     if (result == CY_RSLT_SUCCESS)
     {
         #if (CYHAL_DRIVER_AVAILABLE_NVM)
-        result = cyhal_nvm_init(&obj);
+        result = cyhal_nvm_init(&hal_obj);
         #else // (CYHAL_DRIVER_AVAILABLE_NVM)
-        result = cyhal_flash_init(&obj);
+        result = cyhal_flash_init(&hal_obj);
         #endif // (CYHAL_DRIVER_AVAILABLE_NVM)
     }
-    #endif // !defined(MTB_HAL_DRIVER_AVAILABLE_NVM)
+    #endif // !(MTB_HAL_DRIVER_AVAILABLE_NVM)
 
     if (result == CY_RSLT_SUCCESS)
     {
@@ -559,20 +575,26 @@ cy_rslt_t mtb_block_storage_nvm_create(mtb_block_storage_t* bsd)
         bsd->get_erase_value = mtb_block_storage_nvm_erase_value;
         bsd->is_in_range = mtb_block_storage_nvm_is_in_range;
         bsd->is_erase_required = mtb_block_storage_nvm_is_erase_required;
-        bsd->context = &obj;
+        #if !(MTB_HAL_DRIVER_AVAILABLE_NVM)
+        bsd->context = &hal_obj;
+        #else
+        bsd->context = (obj != NULL) ? obj : &hal_obj;
+        #endif
     }
-    #if !defined(MTB_HAL_DRIVER_AVAILABLE_NVM)
+    #if !(MTB_HAL_DRIVER_AVAILABLE_NVM)
     else
     {
         #if (CYHAL_DRIVER_AVAILABLE_NVM)
-        cyhal_nvm_free(&obj);
-        #else
-        cyhal_flash_free(&obj);
+        cyhal_nvm_free(&hal_obj);
+        #elif (CYHAL_DRIVER_AVAILABLE_FLASH)
+        cyhal_flash_free(&hal_obj);
         #endif
     }
-    #endif // !defined(MTB_HAL_DRIVER_AVAILABLE_NVM)
+    #endif // !(MTB_HAL_DRIVER_AVAILABLE_NVM)
     return result;
 }
 
 
+#endif \
+    // (CYHAL_DRIVER_AVAILABLE_NVM)||(CYHAL_DRIVER_AVAILABLE_FLASH)||(MTB_HAL_DRIVER_AVAILABLE_NVM)
 #endif // if !defined(COMPONENT_CAT2)

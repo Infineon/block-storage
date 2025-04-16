@@ -1,5 +1,5 @@
 /***********************************************************************************************//**
- * \file mtb_block_storage_cat2.c
+ * \file mtb_block_storage_pdl.c
  *
  * \brief
  * Utility library for for defining storage to NVM for PSOC 4 that is not supported by HAL NVM.
@@ -30,13 +30,13 @@
 
 #include <string.h>
 
-#define MTB_BLOCK_STORAGE_CAT2_ERASE_VALUE   (0x00)
+#define MTB_BLOCK_STORAGE_PDL_ERASE_VALUE   (0x00)
 
 
 //--------------------------------------------------------------------------------------------------
-// mtb_block_storage_cat2_read_size
+// mtb_block_storage_pdl_read_size
 //--------------------------------------------------------------------------------------------------
-static uint32_t mtb_block_storage_cat2_read_size(void* context, uint32_t addr)
+static uint32_t mtb_block_storage_pdl_read_size(void* context, uint32_t addr)
 {
     CY_UNUSED_PARAMETER(context);
     CY_UNUSED_PARAMETER(addr);
@@ -46,9 +46,9 @@ static uint32_t mtb_block_storage_cat2_read_size(void* context, uint32_t addr)
 
 
 //--------------------------------------------------------------------------------------------------
-// mtb_block_storage_cat2_program_size
+// mtb_block_storage_pdl_program_size
 //--------------------------------------------------------------------------------------------------
-static uint32_t mtb_block_storage_cat2_program_size(void* context, uint32_t addr)
+static uint32_t mtb_block_storage_pdl_program_size(void* context, uint32_t addr)
 {
     CY_UNUSED_PARAMETER(context);
     CY_UNUSED_PARAMETER(addr);
@@ -57,9 +57,9 @@ static uint32_t mtb_block_storage_cat2_program_size(void* context, uint32_t addr
 
 
 //--------------------------------------------------------------------------------------------------
-// mtb_block_storage_cat2_erase_size
+// mtb_block_storage_pdl_erase_size
 //--------------------------------------------------------------------------------------------------
-static uint32_t mtb_block_storage_cat2_erase_size(void* context, uint32_t addr)
+static uint32_t mtb_block_storage_pdl_erase_size(void* context, uint32_t addr)
 {
     CY_UNUSED_PARAMETER(context);
     CY_UNUSED_PARAMETER(addr);
@@ -68,21 +68,21 @@ static uint32_t mtb_block_storage_cat2_erase_size(void* context, uint32_t addr)
 
 
 //--------------------------------------------------------------------------------------------------
-// mtb_block_storage_cat2_erase_value
+// mtb_block_storage_pdl_erase_value
 //--------------------------------------------------------------------------------------------------
-static uint8_t mtb_block_storage_cat2_erase_value(void* context, uint32_t addr)
+static uint8_t mtb_block_storage_pdl_erase_value(void* context, uint32_t addr)
 {
     CY_UNUSED_PARAMETER(context);
     CY_UNUSED_PARAMETER(addr);
-    return MTB_BLOCK_STORAGE_CAT2_ERASE_VALUE;
+    return MTB_BLOCK_STORAGE_PDL_ERASE_VALUE;
 }
 
 
 //--------------------------------------------------------------------------------------------------
-// mtb_block_storage_cat2_read
+// mtb_block_storage_pdl_read
 //--------------------------------------------------------------------------------------------------
-static cy_rslt_t mtb_block_storage_cat2_read(void* context, uint32_t addr, uint32_t length,
-                                             uint8_t* buf)
+static cy_rslt_t mtb_block_storage_pdl_read(void* context, uint32_t addr, uint32_t length,
+                                            uint8_t* buf)
 {
     CY_UNUSED_PARAMETER(context);
     (void)memcpy((uint8_t*)buf, (const uint8_t*)(addr), length);
@@ -91,13 +91,13 @@ static cy_rslt_t mtb_block_storage_cat2_read(void* context, uint32_t addr, uint3
 
 
 //--------------------------------------------------------------------------------------------------
-// mtb_block_storage_cat2_program
+// mtb_block_storage_pdl_program
 //--------------------------------------------------------------------------------------------------
-static cy_rslt_t mtb_block_storage_cat2_program(void* context, uint32_t addr, uint32_t length,
-                                                const uint8_t* buf)
+static cy_rslt_t mtb_block_storage_pdl_program(void* context, uint32_t addr, uint32_t length,
+                                               const uint8_t* buf)
 {
     cy_rslt_t result = CY_RSLT_SUCCESS;
-    uint32_t prog_size = mtb_block_storage_cat2_program_size(context, addr);
+    uint32_t prog_size = mtb_block_storage_pdl_program_size(context, addr);
 
 
     if ((0 != (length % prog_size)))
@@ -122,12 +122,12 @@ static cy_rslt_t mtb_block_storage_cat2_program(void* context, uint32_t addr, ui
 
 
 //--------------------------------------------------------------------------------------------------
-// mtb_block_storage_cat2_erase
+// mtb_block_storage_pdl_erase
 //--------------------------------------------------------------------------------------------------
-static cy_rslt_t mtb_block_storage_cat2_erase(void* context, uint32_t addr, uint32_t length)
+static cy_rslt_t mtb_block_storage_pdl_erase(void* context, uint32_t addr, uint32_t length)
 {
     cy_rslt_t result = CY_RSLT_SUCCESS;
-    uint32_t erase_size = mtb_block_storage_cat2_erase_size(context, addr);
+    uint32_t erase_size = mtb_block_storage_pdl_erase_size(context, addr);
     uint32_t buffer[CY_FLASH_SIZEOF_ROW] = { 0u };
 
     if ((0 != (length % erase_size)))
@@ -151,35 +151,9 @@ static cy_rslt_t mtb_block_storage_cat2_erase(void* context, uint32_t addr, uint
 
 
 //--------------------------------------------------------------------------------------------------
-// mtb_block_storage_cat2_program_nb
+// mtb_block_storage_pdl_is_in_range
 //--------------------------------------------------------------------------------------------------
-static cy_rslt_t mtb_block_storage_cat2_program_nb(void* context, uint32_t addr, uint32_t length,
-                                                   const uint8_t* buf)
-{
-    CY_UNUSED_PARAMETER(context);
-    CY_UNUSED_PARAMETER(addr);
-    CY_UNUSED_PARAMETER(length);
-    CY_UNUSED_PARAMETER(buf);
-    return MTB_BLOCK_STORAGE_NOT_SUPPORTED_ERROR;
-}
-
-
-//--------------------------------------------------------------------------------------------------
-// mtb_block_storage_cat2_erase_nb
-//--------------------------------------------------------------------------------------------------
-static cy_rslt_t mtb_block_storage_cat2_erase_nb(void* context, uint32_t addr, uint32_t length)
-{
-    CY_UNUSED_PARAMETER(context);
-    CY_UNUSED_PARAMETER(addr);
-    CY_UNUSED_PARAMETER(length);
-    return MTB_BLOCK_STORAGE_NOT_SUPPORTED_ERROR;
-}
-
-
-//--------------------------------------------------------------------------------------------------
-// mtb_block_storage_cat2_is_in_range
-//--------------------------------------------------------------------------------------------------
-static bool mtb_block_storage_cat2_is_in_range(void* context, uint32_t addr, uint32_t length)
+static bool mtb_block_storage_pdl_is_in_range(void* context, uint32_t addr, uint32_t length)
 {
     CY_UNUSED_PARAMETER(context);
     bool result = false;
@@ -192,9 +166,9 @@ static bool mtb_block_storage_cat2_is_in_range(void* context, uint32_t addr, uin
 
 
 //--------------------------------------------------------------------------------------------------
-// mtb_block_storage_cat2_is_in_erase_Required
+// mtb_block_storage_pdl_is_in_erase_Required
 //--------------------------------------------------------------------------------------------------
-static bool mtb_block_storage_cat2_is_erase_required(void* context, uint32_t addr, uint32_t length)
+static bool mtb_block_storage_pdl_is_erase_required(void* context, uint32_t addr, uint32_t length)
 {
     CY_UNUSED_PARAMETER(context);
     CY_UNUSED_PARAMETER(addr);
@@ -204,9 +178,9 @@ static bool mtb_block_storage_cat2_is_erase_required(void* context, uint32_t add
 
 
 //--------------------------------------------------------------------------------------------------
-// mtb_block_storage_cat2_create
+// mtb_block_storage_create_pdl
 //--------------------------------------------------------------------------------------------------
-cy_rslt_t mtb_block_storage_cat2_create(mtb_block_storage_t* bsd)
+cy_rslt_t mtb_block_storage_create_pdl(mtb_block_storage_t* bsd)
 {
     cy_rslt_t result = CY_RSLT_SUCCESS;
 
@@ -217,17 +191,17 @@ cy_rslt_t mtb_block_storage_cat2_create(mtb_block_storage_t* bsd)
 
     if (result == CY_RSLT_SUCCESS)
     {
-        bsd->read = mtb_block_storage_cat2_read;
-        bsd->program = mtb_block_storage_cat2_program;
-        bsd->erase = mtb_block_storage_cat2_erase;
-        bsd->program_nb = mtb_block_storage_cat2_program_nb;
-        bsd->erase_nb = mtb_block_storage_cat2_erase_nb;
-        bsd->get_read_size = mtb_block_storage_cat2_read_size;
-        bsd->get_program_size = mtb_block_storage_cat2_program_size;
-        bsd->get_erase_size = mtb_block_storage_cat2_erase_size;
-        bsd->get_erase_value = mtb_block_storage_cat2_erase_value;
-        bsd->is_in_range = mtb_block_storage_cat2_is_in_range;
-        bsd->is_erase_required = mtb_block_storage_cat2_is_erase_required;
+        bsd->read = mtb_block_storage_pdl_read;
+        bsd->program = mtb_block_storage_pdl_program;
+        bsd->erase = mtb_block_storage_pdl_erase;
+        bsd->program_nb = NULL; //Setting NULL, as program_nb is not supported
+        bsd->erase_nb = NULL; //Setting NULL, as erase_nb is not supported
+        bsd->get_read_size = mtb_block_storage_pdl_read_size;
+        bsd->get_program_size = mtb_block_storage_pdl_program_size;
+        bsd->get_erase_size = mtb_block_storage_pdl_erase_size;
+        bsd->get_erase_value = mtb_block_storage_pdl_erase_value;
+        bsd->is_in_range = mtb_block_storage_pdl_is_in_range;
+        bsd->is_erase_required = mtb_block_storage_pdl_is_erase_required;
         bsd->context = NULL;
     }
     return result;

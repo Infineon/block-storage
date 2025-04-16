@@ -85,8 +85,7 @@ $(document).ready(function(){initNavTree('group__group__block__storage.html','')
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Data Structures</a> &#124;
-<a href="#typedef-members">Typedefs</a> &#124;
-<a href="#func-members">Functions</a>  </div>
+<a href="#typedef-members">Typedefs</a>  </div>
   <div class="headertitle"><div class="title">Block Storage Library</div></div>
 </div><!--header-->
 <div class="contents">
@@ -98,35 +97,53 @@ Getting Started</h1>
 <ol type="1">
 <li>Include the block-storage library header in the application <div class="fragment"><div class="line"><span class="preprocessor">#include &quot;mtb_block_storage.h&quot;</span></div>
 </div><!-- fragment --></li>
-<li>Initialize the block storage device Example initialization using the pre implemented device built on top of HAL NVM <div class="fragment"><div class="line">    <a class="code hl_struct" href="group__group__block__storage.html#structmtb__block__storage__t">mtb_block_storage_t</a> my_nvm_bsd;</div>
-<div class="line">    <a class="code hl_function" href="group__group__block__storage.html#gaf015526bd6a314dbfd78e2d12ad0533d">mtb_block_storage_nvm_create</a>(&amp;my_nvm_bsd);</div>
-<div class="ttc" id="agroup__group__block__storage_html_gaf015526bd6a314dbfd78e2d12ad0533d"><div class="ttname"><a href="group__group__block__storage.html#gaf015526bd6a314dbfd78e2d12ad0533d">mtb_block_storage_nvm_create</a></div><div class="ttdeci">cy_rslt_t mtb_block_storage_nvm_create(mtb_block_storage_t *bsd)</div><div class="ttdoc">Function to create the block storage elements for devices that have HAL support.</div><div class="ttdef"><b>Definition:</b> mtb_block_storage_nvm.c:529</div></div>
-<div class="ttc" id="agroup__group__block__storage_html_structmtb__block__storage__t"><div class="ttname"><a href="group__group__block__storage.html#structmtb__block__storage__t">mtb_block_storage_t</a></div><div class="ttdoc">Block device interface.</div><div class="ttdef"><b>Definition:</b> mtb_block_storage.h:188</div></div>
+<li>Initialize the block storage device Example initialization using the pre implemented device built on top of HAL NVM <div class="fragment"><div class="line">    mtb_hal_nvm_t nvm_obj;</div>
+<div class="line">    <a class="code hl_struct" href="group__group__block__storage.html#structmtb__block__storage__t">mtb_block_storage_t</a> my_nvm_bsd;</div>
+<div class="line">    mtb_hal_nvm_setup(&amp;nvm_obj, &amp;nvm_config);</div>
+<div class="line">    mtb_block_storage_create_hal_nvm(&amp;my_nvm_bsd, &amp;nvm_obj);</div>
+<div class="ttc" id="agroup__group__block__storage_html_structmtb__block__storage__t"><div class="ttname"><a href="group__group__block__storage.html#structmtb__block__storage__t">mtb_block_storage_t</a></div><div class="ttdoc">Block device interface.</div><div class="ttdef"><b>Definition:</b> mtb_block_storage.h:204</div></div>
+</div><!-- fragment --> Example initialization using the pre implemented device built on top of Serial Memory <div class="fragment"><div class="line">    <a class="code hl_struct" href="group__group__block__storage.html#structmtb__block__storage__t">mtb_block_storage_t</a> my_serial_memory_bsd;</div>
+<div class="line">    mtb_serial_memory_t serial_memory_obj;</div>
+<div class="line">    cy_stc_smif_context_t context;</div>
+<div class="line">    <span class="comment">/* Setup the serial memory object */</span></div>
+<div class="line">    mtb_serial_memory_setup(</div>
+<div class="line">        &amp;serial_memory_obj, MTB_SERIAL_MEMORY_CHIP_SELECT_0,</div>
+<div class="line">        &amp;base_address, &amp;sm_clock, &amp;context, &amp;smif_block_obj);</div>
+<div class="line">    <span class="comment">/* Create the block-storage - serial memory object */</span></div>
+<div class="line">    mtb_block_storage_create_serial_memory(&amp;my_serial_memory_bsd, &amp;serial_memory_obj);</div>
+</div><!-- fragment --> Example initialization using the pre implemented device built on top of Serial Flash <div class="fragment"><div class="line">    <a class="code hl_struct" href="group__group__block__storage.html#structmtb__block__storage__t">mtb_block_storage_t</a> my_serial_flash_bsd;</div>
+<div class="line">    <span class="keyword">const</span> uint32_t qspi_bus_freq_hz = 50000000lu;</div>
+<div class="line">    cy_serial_flash_qspi_init(&amp;mem_config, CYBSP_QSPI_D0,</div>
+<div class="line">                              CYBSP_QSPI_D1, CYBSP_QSPI_D2, CYBSP_QSPI_D3, NC,</div>
+<div class="line">                              NC, NC, NC,</div>
+<div class="line">                              CYBSP_QSPI_SCK, CYBSP_QSPI_SS, qspi_bus_freq_hz);</div>
+<div class="line">    <span class="comment">/* Create the block-storage based on the serial flash */</span></div>
+<div class="line">    mtb_block_storage_create_serial_flash(&amp;my_serial_flash_bsd);</div>
 </div><!-- fragment --></li>
 <li>The library should now be ready to perform operations.<ul>
 <li>Program operation. <div class="fragment"><div class="line">    uint8_t data[MAX_PROG_SIZE];</div>
 <div class="line">    uint32_t programSize = my_nvm_bsd-&gt;<a class="code hl_variable" href="group__group__block__storage.html#a04052bfa9b52af3b3d5668768cebd98b">get_program_size</a>(my_nvm_bsd-&gt;<a class="code hl_variable" href="group__group__block__storage.html#a27d8bdfefc3b80ef1d8c8307669d5712">context</a>, address);</div>
 <div class="line">    result = my_nvm_bsd-&gt;<a class="code hl_variable" href="group__group__block__storage.html#af846e706b42e31d7950e3a4a75bd14d7">program</a>(my_nvm_bsd-&gt;<a class="code hl_variable" href="group__group__block__storage.html#a27d8bdfefc3b80ef1d8c8307669d5712">context</a>, address, programSize, data);</div>
 <div class="line">    CY_ASSERT(result == CY_RSLT_SUCCESS);</div>
-<div class="ttc" id="agroup__group__block__storage_html_a04052bfa9b52af3b3d5668768cebd98b"><div class="ttname"><a href="group__group__block__storage.html#a04052bfa9b52af3b3d5668768cebd98b">mtb_block_storage_t::get_program_size</a></div><div class="ttdeci">mtb_block_storage_program_size_t get_program_size</div><div class="ttdoc">Function to get program size for an address.</div><div class="ttdef"><b>Definition:</b> mtb_block_storage.h:196</div></div>
-<div class="ttc" id="agroup__group__block__storage_html_a27d8bdfefc3b80ef1d8c8307669d5712"><div class="ttname"><a href="group__group__block__storage.html#a27d8bdfefc3b80ef1d8c8307669d5712">mtb_block_storage_t::context</a></div><div class="ttdeci">void * context</div><div class="ttdoc">Context object that can be used in the block device implementation.</div><div class="ttdef"><b>Definition:</b> mtb_block_storage.h:189</div></div>
-<div class="ttc" id="agroup__group__block__storage_html_af846e706b42e31d7950e3a4a75bd14d7"><div class="ttname"><a href="group__group__block__storage.html#af846e706b42e31d7950e3a4a75bd14d7">mtb_block_storage_t::program</a></div><div class="ttdeci">mtb_block_storage_program_t program</div><div class="ttdoc">Function to program to device.</div><div class="ttdef"><b>Definition:</b> mtb_block_storage.h:207</div></div>
+<div class="ttc" id="agroup__group__block__storage_html_a04052bfa9b52af3b3d5668768cebd98b"><div class="ttname"><a href="group__group__block__storage.html#a04052bfa9b52af3b3d5668768cebd98b">mtb_block_storage_t::get_program_size</a></div><div class="ttdeci">mtb_block_storage_program_size_t get_program_size</div><div class="ttdoc">Function to get program size for an address.</div><div class="ttdef"><b>Definition:</b> mtb_block_storage.h:212</div></div>
+<div class="ttc" id="agroup__group__block__storage_html_a27d8bdfefc3b80ef1d8c8307669d5712"><div class="ttname"><a href="group__group__block__storage.html#a27d8bdfefc3b80ef1d8c8307669d5712">mtb_block_storage_t::context</a></div><div class="ttdeci">void * context</div><div class="ttdoc">Context object that can be used in the block device implementation.</div><div class="ttdef"><b>Definition:</b> mtb_block_storage.h:205</div></div>
+<div class="ttc" id="agroup__group__block__storage_html_af846e706b42e31d7950e3a4a75bd14d7"><div class="ttname"><a href="group__group__block__storage.html#af846e706b42e31d7950e3a4a75bd14d7">mtb_block_storage_t::program</a></div><div class="ttdeci">mtb_block_storage_program_t program</div><div class="ttdoc">Function to program to device.</div><div class="ttdef"><b>Definition:</b> mtb_block_storage.h:223</div></div>
 </div><!-- fragment --></li>
 <li>Read operation. <div class="fragment"><div class="line">    uint8_t read_data[10];</div>
 <div class="line">    result = my_nvm_bsd-&gt;<a class="code hl_variable" href="group__group__block__storage.html#a75886e0eb4c32fb4244bf15d5c521fa7">read</a>(my_nvm_bsd-&gt;<a class="code hl_variable" href="group__group__block__storage.html#a27d8bdfefc3b80ef1d8c8307669d5712">context</a>, address, <span class="keyword">sizeof</span>(read_data), read_data);</div>
 <div class="line">    CY_ASSERT(result == CY_RSLT_SUCCESS);</div>
-<div class="ttc" id="agroup__group__block__storage_html_a75886e0eb4c32fb4244bf15d5c521fa7"><div class="ttname"><a href="group__group__block__storage.html#a75886e0eb4c32fb4244bf15d5c521fa7">mtb_block_storage_t::read</a></div><div class="ttdeci">mtb_block_storage_read_t read</div><div class="ttdoc">Function to read from device.</div><div class="ttdef"><b>Definition:</b> mtb_block_storage.h:206</div></div>
+<div class="ttc" id="agroup__group__block__storage_html_a75886e0eb4c32fb4244bf15d5c521fa7"><div class="ttname"><a href="group__group__block__storage.html#a75886e0eb4c32fb4244bf15d5c521fa7">mtb_block_storage_t::read</a></div><div class="ttdeci">mtb_block_storage_read_t read</div><div class="ttdoc">Function to read from device.</div><div class="ttdef"><b>Definition:</b> mtb_block_storage.h:222</div></div>
 </div><!-- fragment --></li>
 <li>Erase operation. <div class="fragment"><div class="line">    uint32_t eraseSize = my_nvm_bsd-&gt;<a class="code hl_variable" href="group__group__block__storage.html#a55cbb7162d29c1d87ee0f1b011f9f3fa">get_erase_size</a>(my_nvm_bsd-&gt;<a class="code hl_variable" href="group__group__block__storage.html#a27d8bdfefc3b80ef1d8c8307669d5712">context</a>, address);</div>
 <div class="line">    result = my_nvm_bsd-&gt;<a class="code hl_variable" href="group__group__block__storage.html#a1ff632b7d402bc19284f3bc3d55f3ae2">erase</a>(my_nvm_bsd-&gt;<a class="code hl_variable" href="group__group__block__storage.html#a27d8bdfefc3b80ef1d8c8307669d5712">context</a>, address, eraseSize);</div>
 <div class="line">    CY_ASSERT(result == CY_RSLT_SUCCESS);</div>
-<div class="ttc" id="agroup__group__block__storage_html_a1ff632b7d402bc19284f3bc3d55f3ae2"><div class="ttname"><a href="group__group__block__storage.html#a1ff632b7d402bc19284f3bc3d55f3ae2">mtb_block_storage_t::erase</a></div><div class="ttdeci">mtb_block_storage_erase_t erase</div><div class="ttdoc">Function to erase device.</div><div class="ttdef"><b>Definition:</b> mtb_block_storage.h:208</div></div>
-<div class="ttc" id="agroup__group__block__storage_html_a55cbb7162d29c1d87ee0f1b011f9f3fa"><div class="ttname"><a href="group__group__block__storage.html#a55cbb7162d29c1d87ee0f1b011f9f3fa">mtb_block_storage_t::get_erase_size</a></div><div class="ttdeci">mtb_block_storage_erase_size_t get_erase_size</div><div class="ttdoc">Function to get erase size for an address.</div><div class="ttdef"><b>Definition:</b> mtb_block_storage.h:199</div></div>
+<div class="ttc" id="agroup__group__block__storage_html_a1ff632b7d402bc19284f3bc3d55f3ae2"><div class="ttname"><a href="group__group__block__storage.html#a1ff632b7d402bc19284f3bc3d55f3ae2">mtb_block_storage_t::erase</a></div><div class="ttdeci">mtb_block_storage_erase_t erase</div><div class="ttdoc">Function to erase device.</div><div class="ttdef"><b>Definition:</b> mtb_block_storage.h:224</div></div>
+<div class="ttc" id="agroup__group__block__storage_html_a55cbb7162d29c1d87ee0f1b011f9f3fa"><div class="ttname"><a href="group__group__block__storage.html#a55cbb7162d29c1d87ee0f1b011f9f3fa">mtb_block_storage_t::get_erase_size</a></div><div class="ttdeci">mtb_block_storage_erase_size_t get_erase_size</div><div class="ttdoc">Function to get erase size for an address.</div><div class="ttdef"><b>Definition:</b> mtb_block_storage.h:215</div></div>
 </div><!-- fragment --></li>
 </ul>
 </li>
 </ol>
-<p >Users can create their own implementation of other block devices by following the implementation done for mtb_block_storage_nvm_create and mtb_block_storage_cat2_create </p>
+<p >Users can create their own implementation of other block devices by following the implementation done for mtb_block_storage_create_hal_nvm and mtb_block_storage_create_pdl </p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Data Structures</h2></td></tr>
@@ -169,12 +186,6 @@ Typedefs</h2></td></tr>
 <tr class="memitem:gaa23135e9b2e281903586a964eb3258a1"><td class="memItemLeft" align="right" valign="top">typedef bool(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__block__storage.html#gaa23135e9b2e281903586a964eb3258a1">mtb_block_storage_is_erase_required_t</a>) (void *context, uint32_t addr, uint32_t length)</td></tr>
 <tr class="memdesc:gaa23135e9b2e281903586a964eb3258a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function prototype for checking if the memory type does require erase operation.  <a href="group__group__block__storage.html#gaa23135e9b2e281903586a964eb3258a1">More...</a><br /></td></tr>
 <tr class="separator:gaa23135e9b2e281903586a964eb3258a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
-Functions</h2></td></tr>
-<tr class="memitem:gaf015526bd6a314dbfd78e2d12ad0533d"><td class="memItemLeft" align="right" valign="top">cy_rslt_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__block__storage.html#gaf015526bd6a314dbfd78e2d12ad0533d">mtb_block_storage_nvm_create</a> (<a class="el" href="group__group__block__storage.html#structmtb__block__storage__t">mtb_block_storage_t</a> *bsd)</td></tr>
-<tr class="memdesc:gaf015526bd6a314dbfd78e2d12ad0533d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function to create the block storage elements for devices that have HAL support.  <a href="group__group__block__storage.html#gaf015526bd6a314dbfd78e2d12ad0533d">More...</a><br /></td></tr>
-<tr class="separator:gaf015526bd6a314dbfd78e2d12ad0533d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/><h2 class="groupheader">Data Structure Documentation</h2>
 <a name="structmtb__block__storage__t" id="structmtb__block__storage__t"></a>
@@ -538,34 +549,6 @@ Function to check whether the memory type does require erase operation. </td></t
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>Result of the is erase required check. </dd></dl>
-
-</div>
-</div>
-<h2 class="groupheader">Function Documentation</h2>
-<a id="gaf015526bd6a314dbfd78e2d12ad0533d" name="gaf015526bd6a314dbfd78e2d12ad0533d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#gaf015526bd6a314dbfd78e2d12ad0533d">&#9670;&nbsp;</a></span>mtb_block_storage_nvm_create()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">cy_rslt_t mtb_block_storage_nvm_create </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="group__group__block__storage.html#structmtb__block__storage__t">mtb_block_storage_t</a> *&#160;</td>
-          <td class="paramname"><em>bsd</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Function to create the block storage elements for devices that have HAL support. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">bsd</td><td>Block storage element to be initialized </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>Result of the create function </dd></dl>
 
 </div>
 </div>

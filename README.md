@@ -68,9 +68,50 @@ The block storage object is as follows:
 * is_in_range: checks that address is greater than CY_FLASH_BASE and that address + length is smaller than CY_FLASH_BASE + CY_FLASH_SIZE
 * is_erase_required: returns true
 
+#### Serial Memory implementation
+
+This is built on top of the Serial Memory library and it allows to abstract all devices that support serial memory library.
+
+The block storage object is as follows:
+
+* context : a pointer to an mtb_serial_memory_t object
+* get_read_size: returns 1 as the read is done by direct access to the specified address
+* get_program_size: uses mtb_serial_memory_t object to determine the page size for programming of the sector to which the given address belongs
+* get_erase_size: uses mtb_serial_memory_t object to determine the the size of the erase sector to which the given address
+belongs
+* get_erase_value: Used to determine the the erase value for the current memory
+* read: calls directly mtb_serial_memory_read with the correct parameters
+* program: calls directly mtb_serial_memory_write with the correct parameters
+* erase: calls directly mtb_serial_memory_erase with the correct parameters
+* program_nb: this operation is not supported and hence the function pointer is set as NULL
+* erase_nb: this operation is not supported and hence the function pointer is set as NULL
+* is_in_range: this operation is not supported and hence the function pointer is set as NULL
+* is_erase_required: returns 1, since there is no way to surely know whether an erase operation is required or not, it's safer to assume that the serial memory needs to be erased
+
+#### Serial Flash implementation
+
+This is built on top of the Serial FLash library and it allows to abstract all devices that support serial flash library.
+
+The block storage object is as follows:
+
+* context : NULL, no supporting context is needed
+* get_read_size: returns 1 as the read is done by direct access to the specified address
+* get_program_size: returns the page size for programming of the sector to which the given address belongs
+* get_erase_size: returns the size of the erase sector to which the given address belongs
+* get_erase_value: Used to determine the the erase value for the current memory
+* read: calls directly cy_serial_flash_qspi_read with the correct parameters
+* program: calls directly cy_serial_flash_qspi_write with the correct parameters
+* erase: calls directly cy_serial_flash_qspi_erase with the correct parameters
+* program_nb: this operation is not supported and hence the function pointer is set as NULL
+* erase_nb: this operation is not supported and hence the function pointer is set as NULL
+* is_in_range: this operation is not supported and hence the function pointer is set as NULL
+* is_erase_required: returns 1, since there is no way to surely know whether an erase operation is required or not, it's safer to assume that the serial flash needs to be erased
+
 ## Dependencies
 * [mtb-hal-cat1](https://github.com/infineon/mtb-hal-cat1)
 * [mtb-pdl-cat2](https://github.com/infineon/mtb-pdl-cat2)
+* [serial-memory](https://github.com/infineon/serial-memory)
+* [serial-flash](https://github.com/infineon/serial-flash)
 
 ## More information
 * [API Reference Guide](https://infineon.github.io/block-storage/html/index.html)

@@ -31,11 +31,13 @@ var NAVTREE =
       [ "Design details", "index.html#autotoc_md3", [
         [ "Block storage object", "index.html#autotoc_md4", [
           [ "HAL implementation", "index.html#autotoc_md5", null ],
-          [ "PSoC4 implementation", "index.html#autotoc_md6", null ]
+          [ "PSoC4 implementation", "index.html#autotoc_md6", null ],
+          [ "Serial Memory implementation", "index.html#autotoc_md7", null ],
+          [ "Serial Flash implementation", "index.html#autotoc_md8", null ]
         ] ]
       ] ],
-      [ "Dependencies", "index.html#autotoc_md7", null ],
-      [ "More information", "index.html#autotoc_md8", null ]
+      [ "Dependencies", "index.html#autotoc_md9", null ],
+      [ "More information", "index.html#autotoc_md10", null ]
     ] ],
     [ "API Reference", "modules.html", "modules" ]
   ] ]

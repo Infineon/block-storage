@@ -28,6 +28,19 @@
 
 #include "cy_result.h"
 #include <stdbool.h>
+#if defined(COMPONENT_MTB_HAL)
+#include "mtb_hal.h"
+#endif
+#if defined(CY_USING_HAL) || defined(CY_USING_HAL_LITE)
+#include "cyhal.h"
+#endif
+#if defined(COMPONENT_MW_SERIAL_MEMORY)
+#include "mtb_serial_memory.h"
+#endif
+
+#if defined(COMPONENT_SERIAL_FLASH)
+#include "cy_serial_flash_qspi.h"
+#endif
 
 /** A not supported operation is called. */
 #define MTB_BLOCK_STORAGE_NOT_SUPPORTED_ERROR                 \
@@ -41,7 +54,7 @@
 
 //Only limit support for non blocking functionality to PSoC6 for the moment
 #if (defined(COMPONENT_CAT1A) && !defined(CY_DEVICE_TVIIBE)) && \
-    !defined(MTB_HAL_DRIVER_AVAILABLE_NVM)
+    !(MTB_HAL_DRIVER_AVAILABLE_NVM)
 #define MTB_BLOCK_STORAGE_NON_BLOCKING_SUPPORTED
 #endif
 /**
@@ -60,7 +73,10 @@
  * -# Initialize the block storage device
  * Example initialization using the pre implemented device built on top of HAL NVM
  *      \snippet block_storage.c snippet_mtb_block_storage_init_nvm
- *
+ * Example initialization using the pre implemented device built on top of Serial Memory
+ *      \snippet block_storage.c snippet_mtb_block_storage_init_serial_memory
+ * Example initialization using the pre implemented device built on top of Serial Flash
+ *      \snippet block_storage.c snippet_mtb_block_storage_init_serial_flash
  * -# The library should now be ready to perform operations.
  *      - Program operation.
  *        \snippet block_storage.c snippet_mtb_block_storage_program
@@ -70,7 +86,7 @@
  *        \snippet block_storage.c snippet_mtb_block_storage_erase
  *
  * Users can create their own implementation of other block devices by following the implementation
- * done for mtb_block_storage_nvm_create and mtb_block_storage_cat2_create
+ * done for mtb_block_storage_create_hal_nvm and mtb_block_storage_create_pdl
  */
 
 /** Function prototype to get the read size of the block device for a specific address.
@@ -221,20 +237,60 @@ typedef struct
 } mtb_block_storage_t;
 
 #if !defined(COMPONENT_CAT2)
+#if (CYHAL_DRIVER_AVAILABLE_NVM) || (CYHAL_DRIVER_AVAILABLE_FLASH) || (MTB_HAL_DRIVER_AVAILABLE_NVM)
 /** Function to create the block storage elements for devices that have HAL support.
  *
  * @param[in]  bsd  Block storage element to be initialized
+ * @param[in]  obj  Preinitialized HAL NVM object that is to used for block storage
+ *                  operations
  * @return Result of the create function
  */
-cy_rslt_t mtb_block_storage_nvm_create(mtb_block_storage_t* bsd);
+#if (MTB_HAL_DRIVER_AVAILABLE_NVM)
+cy_rslt_t mtb_block_storage_create_hal_nvm(mtb_block_storage_t* bsd, mtb_hal_nvm_t* obj);
 #else
+/** For backwards compatibility with the classic HAL*/
+cy_rslt_t mtb_block_storage_create_hal_nvm(mtb_block_storage_t* bsd, void* obj);
+#endif
+
+/** Deprecated, for backwards compatibility */
+#define mtb_block_storage_nvm_create(bsd) mtb_block_storage_create_hal_nvm(bsd, NULL)
+#endif \
+    //(CYHAL_DRIVER_AVAILABLE_NVM) || (CYHAL_DRIVER_AVAILABLE_FLASH) ||
+    // (MTB_HAL_DRIVER_AVAILABLE_NVM)
+#else // if !defined(COMPONENT_CAT2)
 /** Function to create the block storage elements for CAT2 that does not have HAL NVM support.
  *  It is built directly on top of the PDL layer.
  *
  * @param[in]  bsd  Block storage element to be initialized
  * @return Result of the create function
  */
-cy_rslt_t mtb_block_storage_cat2_create(mtb_block_storage_t* bsd);
-#endif
+cy_rslt_t mtb_block_storage_create_pdl(mtb_block_storage_t* bsd);
+
+/** Deprecated, for backwards compatibility */
+#define mtb_block_storage_cat2_create mtb_block_storage_create_pdl
+#endif // if !defined(COMPONENT_CAT2)
+
+#if defined(COMPONENT_MW_SERIAL_MEMORY)
+/** Function to create the block storage elements for devices that has serial memory
+ * support.
+ *
+ * @param[in]  bsd  Block storage element to be initialized
+ * @param[in]  obj  Preinitialized serial memory object that can be used for
+ *                  block storage operations
+ * @return Result of the create function
+ */
+cy_rslt_t mtb_block_storage_create_serial_memory(mtb_block_storage_t* bsd,
+                                                 mtb_serial_memory_t* obj);
+#endif // defined(COMPONENT_MW_SERIAL_MEMORY)
+
+#if defined(COMPONENT_SERIAL_FLASH)
+/** Function to create the block storage elements for devices that has serial flash
+ * support.
+ *
+ * @param[in]  bsd  Block storage element to be initialized
+ * @return Result of the create function
+ */
+cy_rslt_t mtb_block_storage_create_serial_flash(mtb_block_storage_t* bsd);
+#endif // defined(COMPONENT_SERIAL_FLASH)
 
 /** \} group_block_storage */

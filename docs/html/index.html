@@ -153,13 +153,51 @@ PSoC4 implementation</h3>
 <li>is_in_range: checks that address is greater than CY_FLASH_BASE and that address + length is smaller than CY_FLASH_BASE + CY_FLASH_SIZE</li>
 <li>is_erase_required: returns true</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md7"></a>
+<h3><a class="anchor" id="autotoc_md7"></a>
+Serial Memory implementation</h3>
+<p >This is built on top of the Serial Memory library and it allows to abstract all devices that support serial memory library.</p>
+<p >The block storage object is as follows:</p>
+<ul>
+<li>context : a pointer to an mtb_serial_memory_t object</li>
+<li>get_read_size: returns 1 as the read is done by direct access to the specified address</li>
+<li>get_program_size: uses mtb_serial_memory_t object to determine the page size for programming of the sector to which the given address belongs</li>
+<li>get_erase_size: uses mtb_serial_memory_t object to determine the the size of the erase sector to which the given address belongs</li>
+<li>get_erase_value: Used to determine the the erase value for the current memory</li>
+<li>read: calls directly mtb_serial_memory_read with the correct parameters</li>
+<li>program: calls directly mtb_serial_memory_write with the correct parameters</li>
+<li>erase: calls directly mtb_serial_memory_erase with the correct parameters</li>
+<li>program_nb: this operation is not supported and hence the function pointer is set as NULL</li>
+<li>erase_nb: this operation is not supported and hence the function pointer is set as NULL</li>
+<li>is_in_range: this operation is not supported and hence the function pointer is set as NULL</li>
+<li>is_erase_required: returns 1, since there is no way to surely know whether an erase operation is required or not, it's safer to assume that the serial memory needs to be erased</li>
+</ul>
+<h3><a class="anchor" id="autotoc_md8"></a>
+Serial Flash implementation</h3>
+<p >This is built on top of the Serial FLash library and it allows to abstract all devices that support serial flash library.</p>
+<p >The block storage object is as follows:</p>
+<ul>
+<li>context : NULL, no supporting context is needed</li>
+<li>get_read_size: returns 1 as the read is done by direct access to the specified address</li>
+<li>get_program_size: returns the page size for programming of the sector to which the given address belongs</li>
+<li>get_erase_size: returns the size of the erase sector to which the given address belongs</li>
+<li>get_erase_value: Used to determine the the erase value for the current memory</li>
+<li>read: calls directly cy_serial_flash_qspi_read with the correct parameters</li>
+<li>program: calls directly cy_serial_flash_qspi_write with the correct parameters</li>
+<li>erase: calls directly cy_serial_flash_qspi_erase with the correct parameters</li>
+<li>program_nb: this operation is not supported and hence the function pointer is set as NULL</li>
+<li>erase_nb: this operation is not supported and hence the function pointer is set as NULL</li>
+<li>is_in_range: this operation is not supported and hence the function pointer is set as NULL</li>
+<li>is_erase_required: returns 1, since there is no way to surely know whether an erase operation is required or not, it's safer to assume that the serial flash needs to be erased</li>
+</ul>
+<h1><a class="anchor" id="autotoc_md9"></a>
 Dependencies</h1>
 <ul>
 <li><a href="https://github.com/infineon/mtb-hal-cat1">mtb-hal-cat1</a></li>
 <li><a href="https://github.com/infineon/mtb-pdl-cat2">mtb-pdl-cat2</a></li>
+<li><a href="https://github.com/infineon/serial-memory">serial-memory</a></li>
+<li><a href="https://github.com/infineon/serial-flash">serial-flash</a></li>
 </ul>
-<h1><a class="anchor" id="autotoc_md8"></a>
+<h1><a class="anchor" id="autotoc_md10"></a>
 More information</h1>
 <ul>
 <li><a href="https://infineon.github.io/block-storage/html/index.html">API Reference Guide</a></li>
