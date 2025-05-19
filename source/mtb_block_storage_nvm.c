@@ -173,7 +173,11 @@ static uint32_t mtb_block_storage_nvm_program_size(void* context, uint32_t addr)
         else
         #endif // defined(MTB_BLOCK_STORAGE_NVM_SUPPORT)
         {
+            #if (CYHAL_DRIVER_AVAILABLE_NVM) || (MTB_HAL_DRIVER_AVAILABLE_NVM)
             programSize = region_info->block_size;
+            #elif (CYHAL_DRIVER_AVAILABLE_FLASH)
+            programSize = region_info->sector_size;
+            #endif /* (CYHAL_DRIVER_AVAILABLE_NVM) || (MTB_HAL_DRIVER_AVAILABLE_NVM)*/
         }
     }
     return programSize;

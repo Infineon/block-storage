@@ -13,6 +13,9 @@ Some memory abstractions are already supported such as:
 Others are expected to be added in future releases, or can be supported by the application itself.
 To implement a custom interface see the mtb_block_storage.h file for what is expected and the mtb_block_storage_*.c files for how the existing protocols are supported.
 
+#### v1.3.1
+* Fixed build issue with older version of HAL
+
 #### v1.3.0
 * Added support for serial memory
 * Added support for serial flash
